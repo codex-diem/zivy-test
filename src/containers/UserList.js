@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-var parse = require("parse-link-header");
+import { parseLinkHeader } from "../helpers/parseLink";
 
-const Page = () => {
+const UserList = () => {
   const [users, setUsers] = useState([]);
   const [pageNumber, setPageNumber] = useState(1);
   const [lastPage, setLastPage] = useState(0);
@@ -10,7 +10,6 @@ const Page = () => {
   const observer = useRef();
 
   const lastUserElementRef = useCallback(
-    // (*)
     (node) => {
       if (loading) return;
       if (observer.current) observer.current.disconnect();
@@ -26,7 +25,7 @@ const Page = () => {
 
   useEffect(() => {
     setLoading(true);
-    fetchUsers()
+    fetchUsers(pageNumber)
       .then((res) => {
         if (!!res) {
           setUsers([...users, ...res]);
@@ -35,15 +34,16 @@ const Page = () => {
       .finally(() => setLoading(false));
   }, [pageNumber]);
 
-  const fetchUsers = async () => {
+  const fetchUsers = async (pageNumber) => {
     if (pageNumber <= lastPage || pageNumber === 1) {
       const response = await fetch(
         `https://api.github.com/orgs/mozilla/members?page=${pageNumber}`
       );
       const responeHeaders = await response.headers.get("link");
       const data = await response.json();
-      if (parse(responeHeaders)?.last?.page) {
-        setLastPage(parse(responeHeaders)?.last?.page);
+      console.log(parseLinkHeader(responeHeaders));
+      if (parseLinkHeader(responeHeaders)?.last?.page) {
+        setLastPage(parseLinkHeader(responeHeaders)?.last?.page);
       }
       return data;
     }
@@ -68,4 +68,4 @@ const Page = () => {
   );
 };
 
-export default Page;
+export default UserList;
